@@ -33,16 +33,16 @@ void my_rotate(int dim, pixel *src, pixel *dst)
                 dst[RIDX(dim-1-j, i, dim)] = src[RIDX(i, j, dim)];
 }
 
-char my_rotate2_descr[] = "my_rotate: Above + move calculation out of the loop";
+char my_rotate2_descr[] = "my_rotate: Transpose and exchange rows, with loop interchange + move calculation out of the loop";
 void my_rotate2(int dim, pixel *src, pixel *dst) 
 {
     int i, j, x;
-        for (j = 0; j < dim; j++) 
+        for (j = 0; j < dim; j++)  // Outer loop over columns
         {
-            x = dim-1-j;
-            for (i = 0; i < dim; i++) 
+            x = dim-1-j; // Calcuating row index for the rotated position (flipping rows)
+            for (i = 0; i < dim; i++) // Inner loop over rows
             {
-                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)];
+                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; // Transpose and rotate
             }
         }
 }
@@ -50,25 +50,15 @@ void my_rotate2(int dim, pixel *src, pixel *dst)
 char my_rotate3_descr[] = "my_rotate2: Trying to fix algorithm with transpose and exchange rows";
 void my_rotate3(int dim, pixel *src, pixel *dst) 
 {
-    int i, j;
-    // Transposing the matrix
-    for (i = 0; i < dim; i++) 
-    {
-        for (j = 0; j < dim; j++) 
-        { 
-            dst[RIDX(j, i, dim)] = src[RIDX(i, j, dim)];
-        }
-    }
-    // Exchanging rows of the transposed matrix
-    for (i = 0; i < dim/2; i++) 
-    { 
+    int i, j, x;
         for (j = 0; j < dim; j++) 
         {
-            pixel temp = dst[RIDX(i, j, dim)];
-            dst[RIDX(i, j, dim)] = dst[RIDX(dim-1-i, j, dim)];
-            dst[RIDX(dim-1-i, j, dim)] = temp;
+            x = dim - 1 - j;
+            for (i = 0; i < dim; i++)
+            {
+
+            }
         }
-    }
 }
 
 /* 
@@ -111,6 +101,7 @@ void register_rotate_functions()
     add_rotate_function(&rotate, rotate_descr);
     add_rotate_function(&my_rotate, my_rotate_descr);
     add_rotate_function(&my_rotate2, my_rotate2_descr);
+    add_rotate_function(&my_rotate3, my_rotate3_descr);
     /* ... Register additional test functions here */
 }
 
