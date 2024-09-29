@@ -24,6 +24,38 @@ student_t student = {
  *****************************************************************************/
 
 // Your different versions of the rotate kernel go here
+char my_rotate_descr[] = "my_rotate: Fixing writes to dst to improve memory locality, done the loop interchange";
+void my_rotate(int dim, pixel *src, pixel *dst) 
+{
+    int i, j;
+        for (j = 0; j < dim; j++) 
+            for (i = 0; i < dim; i++) 
+                dst[RIDX(dim-1-j, i, dim)] = src[RIDX(i, j, dim)];
+}
+
+char my_rotate2_descr[] = "my_rotate2: Trying to fix algorithm with transpose and exchange rows";
+void my_rotate2(int dim, pixel *src, pixel *dst) 
+{
+    int i, j;
+    // Transposing the matrix
+    for (i = 0; i < dim; i++) 
+    {
+        for (j = 0; j < dim; j++) 
+        { 
+            dst[RIDX(j, i, dim)] = src[RIDX(i, j, dim)];
+        }
+    }
+    // Exchanging rows of the transposed matrix
+    for (i = 0; i < dim/2; i++) 
+    { 
+        for (j = 0; j < dim; j++) 
+        {
+            pixel temp = dst[RIDX(i, j, dim)];
+            dst[RIDX(i, j, dim)] = dst[RIDX(dim-1-i, j, dim)];
+            dst[RIDX(dim-1-i, j, dim)] = temp;
+        }
+    }
+}
 
 /* 
  * naive_rotate - The naive baseline version of rotate 
@@ -41,8 +73,8 @@ void naive_rotate(int dim, pixel *src, pixel *dst)
     int i, j;
 
     for (i = 0; i < dim; i++)
-	for (j = 0; j < dim; j++)
-	    dst[RIDX(dim-1-j, i, dim)] = src[RIDX(i, j, dim)];
+	    for (j = 0; j < dim; j++)
+	        dst[RIDX(dim-1-j, i, dim)] = src[RIDX(i, j, dim)];
 }
 
 /* 
@@ -63,6 +95,8 @@ void rotate(int dim, pixel *src, pixel *dst)
 void register_rotate_functions() 
 {
     add_rotate_function(&rotate, rotate_descr);
+    add_rotate_function(&my_rotate, my_rotate_descr);
+    add_rotate_function(&my_rotate2, my_rotate2_descr);
     /* ... Register additional test functions here */
 }
 
