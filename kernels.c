@@ -29,7 +29,6 @@ void my_rotate(int dim, pixel *src, pixel *dst)
 {
     int i, j;
         for (j = 0; j < dim; j++)
-            x = dim-1-j 
             for (i = 0; i < dim; i++) 
                 dst[RIDX(dim-1-j, i, dim)] = src[RIDX(i, j, dim)];
 }
