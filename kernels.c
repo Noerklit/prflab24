@@ -28,13 +28,24 @@ char my_rotate_descr[] = "my_rotate: Fixing writes to dst to improve memory loca
 void my_rotate(int dim, pixel *src, pixel *dst) 
 {
     int i, j;
-        for (j = 0; j < dim; j++) 
+        for (j = 0; j < dim; j++)
+            x = dim-1-j 
             for (i = 0; i < dim; i++) 
                 dst[RIDX(dim-1-j, i, dim)] = src[RIDX(i, j, dim)];
 }
 
-char my_rotate2_descr[] = "my_rotate2: Trying to fix algorithm with transpose and exchange rows";
+char my_rotate2_descr[] = "my_rotate: Above + move calculation out of the loop";
 void my_rotate2(int dim, pixel *src, pixel *dst) 
+{
+    int i, j;
+        for (j = 0; j < dim; j++)
+            int x = dim-1-j 
+            for (i = 0; i < dim; i++) 
+                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)];
+}
+
+char my_rotate3_descr[] = "my_rotate2: Trying to fix algorithm with transpose and exchange rows";
+void my_rotate3(int dim, pixel *src, pixel *dst) 
 {
     int i, j;
     // Transposing the matrix
