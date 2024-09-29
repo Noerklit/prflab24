@@ -14,9 +14,9 @@
  * Please fill in the following struct
  */
 student_t student = {
-    "bovik",             /* ITU alias */
-    "Harry Q. Bovik",    /* Full name */
-    "bovik@nowhere.edu", /* Email address */
+    "macj",             /* ITU alias */
+    "Mads Christian Nørklit Jensen",    /* Full name */
+    "macj@itu.dk", /* Email address */
 };
 
 /******************************************************************************
