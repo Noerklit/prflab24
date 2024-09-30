@@ -47,7 +47,7 @@ void my_rotate2(int dim, pixel *src, pixel *dst)
         }
 }
 
-char my_rotate3_descr[] = "my_rotate3: Trying to use loop unrolling";
+char my_rotate3_descr[] = "my_rotate3: With loop unrolling";
 void my_rotate3(int dim, pixel *src, pixel *dst) 
 {
     int i, j, x;
@@ -56,6 +56,68 @@ void my_rotate3(int dim, pixel *src, pixel *dst)
             x = dim-1-j; 
             for (i = 0; i < dim; i+= 8) 
             {
+                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; 
+                if (i + 1 < dim) dst[RIDX(x, i+1, dim)] = src[RIDX(i+1, j, dim)];
+                if (i + 2 < dim) dst[RIDX(x, i+2, dim)] = src[RIDX(i+2, j, dim)];
+                if (i + 3 < dim) dst[RIDX(x, i+3, dim)] = src[RIDX(i+3, j, dim)];
+                if (i + 4 < dim) dst[RIDX(x, i+4, dim)] = src[RIDX(i+4, j, dim)];
+                if (i + 5 < dim) dst[RIDX(x, i+5, dim)] = src[RIDX(i+5, j, dim)];
+                if (i + 6 < dim) dst[RIDX(x, i+6, dim)] = src[RIDX(i+6, j, dim)];
+                if (i + 7 < dim) dst[RIDX(x, i+7, dim)] = src[RIDX(i+7, j, dim)];
+            }
+        }
+}
+
+char my_rotate4_descr[] = "my_rotate4: Moving another calculation out of the loop";
+void my_rotate4(int dim, pixel *src, pixel *dst) 
+{
+    int i, j, x, y;
+        y = dim-1;
+        for (j = 0; j < dim; j++) 
+        {
+            x = y-j; 
+            for (i = 0; i < dim; i+= 8) 
+            {
+                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; 
+                if (i + 1 < dim) dst[RIDX(x, i+1, dim)] = src[RIDX(i+1, j, dim)];
+                if (i + 2 < dim) dst[RIDX(x, i+2, dim)] = src[RIDX(i+2, j, dim)];
+                if (i + 3 < dim) dst[RIDX(x, i+3, dim)] = src[RIDX(i+3, j, dim)];
+                if (i + 4 < dim) dst[RIDX(x, i+4, dim)] = src[RIDX(i+4, j, dim)];
+                if (i + 5 < dim) dst[RIDX(x, i+5, dim)] = src[RIDX(i+5, j, dim)];
+                if (i + 6 < dim) dst[RIDX(x, i+6, dim)] = src[RIDX(i+6, j, dim)];
+                if (i + 7 < dim) dst[RIDX(x, i+7, dim)] = src[RIDX(i+7, j, dim)];
+            }
+        }
+}
+
+char my_rotate5_descr[] = "my_rotate5: Using prefetching";
+void my_rotate5(int dim, pixel *src, pixel *dst) 
+{
+    int i, j, x, y;
+        y = dim-1;
+        for (j = 0; j < dim; j++) 
+        {
+            x = y-j; 
+            for (i = 0; i < dim; i+= 8) 
+            {
+                __builtin_prefetch(&src[RIDX(i, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+1, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+2, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+3, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+4, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+5, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+6, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+7, j, dim)], 0, 1);
+
+                __builtin_prefetch(&dst[RIDX(x, i, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+1, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+2, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+3, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+4, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+5, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+6, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+7, dim)], 1, 1);
+
                 dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; 
                 if (i + 1 < dim) dst[RIDX(x, i+1, dim)] = src[RIDX(i+1, j, dim)];
                 if (i + 2 < dim) dst[RIDX(x, i+2, dim)] = src[RIDX(i+2, j, dim)];
@@ -109,6 +171,8 @@ void register_rotate_functions()
     add_rotate_function(&my_rotate, my_rotate_descr);
     add_rotate_function(&my_rotate2, my_rotate2_descr);
     add_rotate_function(&my_rotate3, my_rotate3_descr);
+    add_rotate_function(&my_rotate4, my_rotate4_descr);
+    add_rotate_function(&my_rotate5, my_rotate5_descr);
     /* ... Register additional test functions here */
 }
 
