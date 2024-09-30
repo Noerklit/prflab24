@@ -28,12 +28,12 @@ char my_rotate_descr[] = "my_rotate: Fixing writes to dst to improve memory loca
 void my_rotate(int dim, pixel *src, pixel *dst) 
 {
     int i, j;
-        for (j = 0; j < dim; j++)
+        for (j = 0; j < dim; j++) // Interchanging the loops
             for (i = 0; i < dim; i++) 
                 dst[RIDX(dim-1-j, i, dim)] = src[RIDX(i, j, dim)];
 }
 
-char my_rotate2_descr[] = "my_rotate: Transpose and exchange rows, with loop interchange + move calculation out of the loop";
+char my_rotate2_descr[] = "my_rotate2: Transpose and exchange rows, with loop interchange + move calculation out of the loop";
 void my_rotate2(int dim, pixel *src, pixel *dst) 
 {
     int i, j, x;
@@ -47,16 +47,18 @@ void my_rotate2(int dim, pixel *src, pixel *dst)
         }
 }
 
-char my_rotate3_descr[] = "my_rotate2: Trying to fix algorithm with transpose and exchange rows";
+char my_rotate3_descr[] = "my_rotate3: Trying to use loop unrolling";
 void my_rotate3(int dim, pixel *src, pixel *dst) 
 {
     int i, j, x;
         for (j = 0; j < dim; j++) 
         {
-            x = dim - 1 - j;
-            for (i = 0; i < dim; i++)
+            x = dim-1-j; 
+            for (i = 0; i < dim; i+= 2) 
             {
-
+                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; 
+                if (i + 1 < dim) dst[RIDX(x, i+1, dim)] = src[RIDX(i+1, j, dim)];
+                if (i + 2 < dim) dst[RIDX(x, i+2, dim)] = src[RIDX(i+2, j, dim)];
             }
         }
 }
