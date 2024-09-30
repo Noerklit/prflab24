@@ -130,6 +130,34 @@ void my_rotate5(int dim, pixel *src, pixel *dst)
         }
 }
 
+char my_rotate6_descr[] = "my_rotate6: Using prefetching with smaller loop unrolling";
+void my_rotate6(int dim, pixel *src, pixel *dst) 
+{
+    int i, j, x, y;
+        y = dim-1;
+        for (j = 0; j < dim; j++) 
+        {
+            x = y-j; 
+            for (i = 0; i < dim; i+= 4) 
+            {
+                __builtin_prefetch(&src[RIDX(i, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+1, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+2, j, dim)], 0, 1);
+                __builtin_prefetch(&src[RIDX(i+3, j, dim)], 0, 1)
+
+                __builtin_prefetch(&dst[RIDX(x, i, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+1, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+2, dim)], 1, 1);
+                __builtin_prefetch(&dst[RIDX(x, i+3, dim)], 1, 1);
+
+                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; 
+                if (i + 1 < dim) dst[RIDX(x, i+1, dim)] = src[RIDX(i+1, j, dim)];
+                if (i + 2 < dim) dst[RIDX(x, i+2, dim)] = src[RIDX(i+2, j, dim)];
+                if (i + 3 < dim) dst[RIDX(x, i+3, dim)] = src[RIDX(i+3, j, dim)];
+            }
+        }
+}
+
 /* 
  * naive_rotate - The naive baseline version of rotate 
  */
@@ -173,6 +201,7 @@ void register_rotate_functions()
     add_rotate_function(&my_rotate3, my_rotate3_descr);
     add_rotate_function(&my_rotate4, my_rotate4_descr);
     add_rotate_function(&my_rotate5, my_rotate5_descr);
+    add_rotate_function(&my_rotate6, my_rotate6_descr);
     /* ... Register additional test functions here */
 }
 
