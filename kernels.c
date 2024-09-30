@@ -54,11 +54,16 @@ void my_rotate3(int dim, pixel *src, pixel *dst)
         for (j = 0; j < dim; j++) 
         {
             x = dim-1-j; 
-            for (i = 0; i < dim; i+= 2) 
+            for (i = 0; i < dim; i+= 8) 
             {
                 dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; 
                 if (i + 1 < dim) dst[RIDX(x, i+1, dim)] = src[RIDX(i+1, j, dim)];
                 if (i + 2 < dim) dst[RIDX(x, i+2, dim)] = src[RIDX(i+2, j, dim)];
+                if (i + 3 < dim) dst[RIDX(x, i+3, dim)] = src[RIDX(i+3, j, dim)];
+                if (i + 4 < dim) dst[RIDX(x, i+4, dim)] = src[RIDX(i+4, j, dim)];
+                if (i + 5 < dim) dst[RIDX(x, i+5, dim)] = src[RIDX(i+5, j, dim)];
+                if (i + 6 < dim) dst[RIDX(x, i+6, dim)] = src[RIDX(i+6, j, dim)];
+                if (i + 7 < dim) dst[RIDX(x, i+7, dim)] = src[RIDX(i+7, j, dim)];
             }
         }
 }
