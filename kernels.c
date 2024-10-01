@@ -271,6 +271,7 @@ void register_rotate_functions()
     add_rotate_function(&my_rotate4, my_rotate4_descr);
     add_rotate_function(&my_rotate5, my_rotate5_descr);
     add_rotate_function(&my_rotate6, my_rotate6_descr);
+    add_rotate_function(&my_rotate7, my_rotate7_descr);
     /* ... Register additional test functions here */
 }
 
