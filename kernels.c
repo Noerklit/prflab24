@@ -90,127 +90,44 @@ void my_rotate4(int dim, pixel *src, pixel *dst)
         }
 }
 
-char my_rotate5_descr[] = "my_rotate5: Using prefetching";
+
+char my_rotate5_descr[] = "my_rotate5: Unrolling the outer loop";
 void my_rotate5(int dim, pixel *src, pixel *dst) 
 {
-    int i, j, x, y;
-        y = dim-1;
-        for (j = 0; j < dim; j++) 
-        {
-            x = y-j; 
-            for (i = 0; i < dim; i+= 8) 
-            {
-                __builtin_prefetch(&src[RIDX(i, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+1, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+2, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+3, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+4, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+5, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+6, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+7, j, dim)], 0, 1);
-
-                __builtin_prefetch(&dst[RIDX(x, i, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+1, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+2, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+3, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+4, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+5, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+6, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+7, dim)], 1, 1);
-
-                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; 
-                if (i + 1 < dim) dst[RIDX(x, i+1, dim)] = src[RIDX(i+1, j, dim)];
-                if (i + 2 < dim) dst[RIDX(x, i+2, dim)] = src[RIDX(i+2, j, dim)];
-                if (i + 3 < dim) dst[RIDX(x, i+3, dim)] = src[RIDX(i+3, j, dim)];
-                if (i + 4 < dim) dst[RIDX(x, i+4, dim)] = src[RIDX(i+4, j, dim)];
-                if (i + 5 < dim) dst[RIDX(x, i+5, dim)] = src[RIDX(i+5, j, dim)];
-                if (i + 6 < dim) dst[RIDX(x, i+6, dim)] = src[RIDX(i+6, j, dim)];
-                if (i + 7 < dim) dst[RIDX(x, i+7, dim)] = src[RIDX(i+7, j, dim)];
-            }
-        }
-}
-
-char my_rotate6_descr[] = "my_rotate6: Using prefetching with smaller loop unrolling";
-void my_rotate6(int dim, pixel *src, pixel *dst) 
-{
-    int i, j, x, y;
-        y = dim-1;
-        for (j = 0; j < dim; j++) 
-        {
-            x = y-j; 
-            for (i = 0; i < dim; i+= 4) 
-            {
-                __builtin_prefetch(&src[RIDX(i, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+1, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+2, j, dim)], 0, 1);
-                __builtin_prefetch(&src[RIDX(i+3, j, dim)], 0, 1);
-
-                __builtin_prefetch(&dst[RIDX(x, i, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+1, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+2, dim)], 1, 1);
-                __builtin_prefetch(&dst[RIDX(x, i+3, dim)], 1, 1);
-
-                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)]; 
-                if (i + 1 < dim) dst[RIDX(x, i+1, dim)] = src[RIDX(i+1, j, dim)];
-                if (i + 2 < dim) dst[RIDX(x, i+2, dim)] = src[RIDX(i+2, j, dim)];
-                if (i + 3 < dim) dst[RIDX(x, i+3, dim)] = src[RIDX(i+3, j, dim)];
-            }
-        }
-}
-
-char my_rotate7_descr[] = "my_rotate7: Unrolling the outer loop";
-void my_rotate7(int dim, pixel *src, pixel *dst) 
-{
-    int i, j, x, y;
+    int i, j, y, x1, x2, x3, x4, x5, x6, x7;
     y = dim - 1;
-    for (j = 0; j < dim; j += 4) 
+    x1 = y - 1;
+    x2 = y - 2;
+    x3 = y - 3;
+    x4 = y - 4;
+    x5 = y - 5;
+    x6 = y - 6;
+    x7 = y - 7;
+
+    for (j = 0; j < dim; j += 8) 
     {
-        if (j < dim) {
-            x = y - j;
-            for (i = 0; i < dim; i += 4) 
-            {
-                dst[RIDX(x, i, dim)] = src[RIDX(i, j, dim)];
-                if (i + 1 < dim) dst[RIDX(x, i + 1, dim)] = src[RIDX(i + 1, j, dim)];
-                if (i + 2 < dim) dst[RIDX(x, i + 2, dim)] = src[RIDX(i + 2, j, dim)];
-                if (i + 3 < dim) dst[RIDX(x, i + 3, dim)] = src[RIDX(i + 3, j, dim)];
-            }
-        }
-
-        if (j + 1 < dim) {
-            x = y - (j + 1);
-            for (i = 0; i < dim; i += 4) 
-            {
-                dst[RIDX(x, i, dim)] = src[RIDX(i, j + 1, dim)];
-                if (i + 1 < dim) dst[RIDX(x, i + 1, dim)] = src[RIDX(i + 1, j + 1, dim)];
-                if (i + 2 < dim) dst[RIDX(x, i + 2, dim)] = src[RIDX(i + 2, j + 1, dim)];
-                if (i + 3 < dim) dst[RIDX(x, i + 3, dim)] = src[RIDX(i + 3, j + 1, dim)];
-            }
-        }
-
-        if (j + 2 < dim) {
-            x = y - (j + 2);
-            for (i = 0; i < dim; i += 4) 
-            {
-                dst[RIDX(x, i, dim)] = src[RIDX(i, j + 2, dim)];
-                if (i + 1 < dim) dst[RIDX(x, i + 1, dim)] = src[RIDX(i + 1, j + 2, dim)];
-                if (i + 2 < dim) dst[RIDX(x, i + 2, dim)] = src[RIDX(i + 2, j + 2, dim)];
-                if (i + 3 < dim) dst[RIDX(x, i + 3, dim)] = src[RIDX(i + 3, j + 2, dim)];
-            }
-        }
-
-        if (j + 3 < dim) {
-            x = y - (j + 3);
-            for (i = 0; i < dim; i += 4) 
-            {
-                dst[RIDX(x, i, dim)] = src[RIDX(i, j + 3, dim)];
-                if (i + 1 < dim) dst[RIDX(x, i + 1, dim)] = src[RIDX(i + 1, j + 3, dim)];
-                if (i + 2 < dim) dst[RIDX(x, i + 2, dim)] = src[RIDX(i + 2, j + 3, dim)];
-                if (i + 3 < dim) dst[RIDX(x, i + 3, dim)] = src[RIDX(i + 3, j + 3, dim)];
-            }
-        }
-    }
-}
-
+	x1 = y - 1;
+    	x2 = y - 2;
+    	x3 = y - 3;
+    	x4 = y - 4;
+    	x5 = y - 5;
+    	x6 = y - 6;
+    	x7 = y - 7;
+	
+	for (i = 0; i < dim; i++) 
+	{
+		 dst[RIDX(y, i, dim)] = src[RIDX(i, j, dim)]; 	
+    	}
+    
+	for (i = 1; i < dim; i++) 
+	{
+		 dst[RIDX(x1, i, dim)] = src[RIDX(i, j, dim)]; 	
+    	}
+	
+	for (i = 2; i < dim; i++) 
+	{
+		 dst[RIDX(x1, i, dim)] = src[RIDX(i, j, dim)]; 	
+    	}
 /* 
  * naive_rotate - The naive baseline version of rotate 
  */
@@ -254,8 +171,6 @@ void register_rotate_functions()
     add_rotate_function(&my_rotate3, my_rotate3_descr);
     add_rotate_function(&my_rotate4, my_rotate4_descr);
     add_rotate_function(&my_rotate5, my_rotate5_descr);
-    add_rotate_function(&my_rotate6, my_rotate6_descr);
-    add_rotate_function(&my_rotate7, my_rotate7_descr);
     /* ... Register additional test functions here */
 }
 
