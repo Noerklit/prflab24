@@ -96,13 +96,6 @@ void my_rotate5(int dim, pixel *src, pixel *dst)
 {
     int i, j, y, x1, x2, x3, x4, x5, x6, x7, j1, j2, j3, j4, j5, j6, j7;
     y = dim - 1;
-    x1 = y - 1;
-    x2 = y - 2;
-    x3 = y - 3;
-    x4 = y - 4;
-    x5 = y - 5;
-    x6 = y - 6;
-    x7 = y - 7;
 
     for (j = 0; j < dim; j += 8) 
     {
@@ -113,7 +106,14 @@ void my_rotate5(int dim, pixel *src, pixel *dst)
 	j5 = j + 5;
 	j6 = j + 6;
 	j7 = j + 7;
-	
+	x1 = y - j1;
+	x2 = y - j2;
+	x3 = y - j3;
+	x4 = y - j4;
+	x5 = y - j5;
+	x6 = y - j6;
+	x7 = y - j7;
+
 	for (i = 0; i < dim; i++) 
 	{
 		dst[RIDX(y, i, dim)] = src[RIDX(i, j, dim)];
