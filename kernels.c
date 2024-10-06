@@ -116,14 +116,6 @@ void my_rotate5(int dim, pixel *src, pixel *dst)
 
 	for (i = 0; i < dim; i++) 
 	{
-		j1 = j + 1;
-		j2 = j + 2;
-		j3 = j + 3; 
-		j4 = j + 4; 
-		j5 = j + 5;
-		j6 = j + 6;
-		j7 = j + 7;
-
 		dst[RIDX(y, i, dim)] = src[RIDX(i, j, dim)];
 		dst[RIDX(x1, i, dim)] = src[RIDX(i, j1, dim)];
 		dst[RIDX(x2, i, dim)] = src[RIDX(i, j2, dim)];
@@ -132,55 +124,48 @@ void my_rotate5(int dim, pixel *src, pixel *dst)
 		dst[RIDX(x5, i, dim)] = src[RIDX(i, j5, dim)];
 		dst[RIDX(x6, i, dim)] = src[RIDX(i, j6, dim)];
 		dst[RIDX(x7, i, dim)] = src[RIDX(i, j7, dim)];
-	
     	}
 }
 }
 
-char my_rotate6_descr[] = "my_rotate6: Unrolling the outer loop";
+char my_rotate6_descr[] = "my_rotate6: Splitting the image into blocks";
 void my_rotate6(int dim, pixel *src, pixel *dst) 
 {
-    int i, j, y, x1, x2, x3, x4, x5, x6, x7, j1, j2, j3, j4, j5, j6, j7;
+    int i, j, jj, ii, B, y, z, x1, x2, x3, x4, x5, x6, x7, j1, j2, j3, j4, j5, j6, j7;
+    B = 32; 
+    for (jj = 0; jj < dim; jj += B) {
+	z = jj + B;
+    	for (ii = 0; ii < dim; ii += B) {
+		for (j = jj; j < z && j < dim; j += 8) {
+			y = dim - 1 - j;
+			j1 = j + 1;
+			j2 = j + 2;
+			j3 = j + 3;
+			j4 = j + 4;
+			j5 = j + 5;
+			j6 = j + 6;
+			j7 = j + 7;
+			x1 = y - 1;
+			x2 = y - 2;
+			x3 = y - 3;
+			x4 = y - 4;
+			x5 = y - 5;
+			x6 = y - 6;
+			x7 = y - 7;
+			for (i = ii; i < ii + B && i < dim; i++) {
+				dst[RIDX(y, i, dim)] = src[RIDX(i, j, dim)];
+				dst[RIDX(x1, i, dim)] = src[RIDX(i, j1, dim)];
+				dst[RIDX(x2, i, dim)] = src[RIDX(i, j2, dim)];
+				dst[RIDX(x3, i, dim)] = src[RIDX(i, j3, dim)];
+				dst[RIDX(x4, i, dim)] = src[RIDX(i, j4, dim)];
+				dst[RIDX(x5, i, dim)] = src[RIDX(i, j5, dim)];
+				dst[RIDX(x6, i, dim)] = src[RIDX(i, j6, dim)];
+				dst[RIDX(x7, i, dim)] = src[RIDX(i, j7, dim)];
 
-    for (j = 0; j < dim; j += 8) 
-    {
-	y = dim - 1 - j;
-	j1 = j + 1;
-	j2 = j + 2;
-	j3 = j + 3; 
-	j4 = j + 4; 
-	j5 = j + 5;
-	j6 = j + 6;
-	j7 = j + 7;
-	x1 = y - 1;
-	x2 = y - 2;
-	x3 = y - 3;
-	x4 = y - 4;
-	x5 = y - 5;
-	x6 = y - 6;
-	x7 = y - 7;
-
-	for (i = 0; i < dim; i++) 
-	{
-		j1 = j + 1;
-		j2 = j + 2;
-		j3 = j + 3; 
-		j4 = j + 4; 
-		j5 = j + 5;
-		j6 = j + 6;
-		j7 = j + 7;
-
-		dst[RIDX(y, i, dim)] = src[RIDX(i, j, dim)];
-		dst[RIDX(x1, i, dim)] = src[RIDX(i, j1, dim)];
-		dst[RIDX(x2, i, dim)] = src[RIDX(i, j2, dim)];
-		dst[RIDX(x3, i, dim)] = src[RIDX(i, j3, dim)];
-		dst[RIDX(x4, i, dim)] = src[RIDX(i, j4, dim)];
-		dst[RIDX(x5, i, dim)] = src[RIDX(i, j5, dim)];
-		dst[RIDX(x6, i, dim)] = src[RIDX(i, j6, dim)];
-		dst[RIDX(x7, i, dim)] = src[RIDX(i, j7, dim)];
-	
-    	}
-}
+			}
+		}
+	}
+    }
 }
 
 /* 
