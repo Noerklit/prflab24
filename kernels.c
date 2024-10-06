@@ -116,6 +116,14 @@ void my_rotate5(int dim, pixel *src, pixel *dst)
 
 	for (i = 0; i < dim; i++) 
 	{
+		j1 = j + 1;
+		j2 = j + 2;
+		j3 = j + 3; 
+		j4 = j + 4; 
+		j5 = j + 5;
+		j6 = j + 6;
+		j7 = j + 7;
+
 		dst[RIDX(y, i, dim)] = src[RIDX(i, j, dim)];
 		dst[RIDX(x1, i, dim)] = src[RIDX(i, j1, dim)];
 		dst[RIDX(x2, i, dim)] = src[RIDX(i, j2, dim)];
@@ -126,17 +134,55 @@ void my_rotate5(int dim, pixel *src, pixel *dst)
 		dst[RIDX(x7, i, dim)] = src[RIDX(i, j7, dim)];
 	
     	}
+}
+}
 
-	for (; j < dim; j++) 
+char my_rotate6_descr[] = "my_rotate6: Unrolling the outer loop";
+void my_rotate6(int dim, pixel *src, pixel *dst) 
+{
+    int i, j, y, x1, x2, x3, x4, x5, x6, x7, j1, j2, j3, j4, j5, j6, j7;
+
+    for (j = 0; j < dim; j += 8) 
+    {
+	y = dim - 1 - j;
+	j1 = j + 1;
+	j2 = j + 2;
+	j3 = j + 3; 
+	j4 = j + 4; 
+	j5 = j + 5;
+	j6 = j + 6;
+	j7 = j + 7;
+	x1 = y - 1;
+	x2 = y - 2;
+	x3 = y - 3;
+	x4 = y - 4;
+	x5 = y - 5;
+	x6 = y - 6;
+	x7 = y - 7;
+
+	for (i = 0; i < dim; i++) 
 	{
-		y = dim - 1 - j;
-		for (i = 0; i < dim; i++) 
-		{
-			dst[RIDX(y, i, dim)] = src[RIDX(i, j, dim)];
-		}
-	}
+		j1 = j + 1;
+		j2 = j + 2;
+		j3 = j + 3; 
+		j4 = j + 4; 
+		j5 = j + 5;
+		j6 = j + 6;
+		j7 = j + 7;
+
+		dst[RIDX(y, i, dim)] = src[RIDX(i, j, dim)];
+		dst[RIDX(x1, i, dim)] = src[RIDX(i, j1, dim)];
+		dst[RIDX(x2, i, dim)] = src[RIDX(i, j2, dim)];
+		dst[RIDX(x3, i, dim)] = src[RIDX(i, j3, dim)];
+		dst[RIDX(x4, i, dim)] = src[RIDX(i, j4, dim)];
+		dst[RIDX(x5, i, dim)] = src[RIDX(i, j5, dim)];
+		dst[RIDX(x6, i, dim)] = src[RIDX(i, j6, dim)];
+		dst[RIDX(x7, i, dim)] = src[RIDX(i, j7, dim)];
+	
+    	}
 }
 }
+
 /* 
  * naive_rotate - The naive baseline version of rotate 
  */
@@ -180,6 +226,7 @@ void register_rotate_functions()
     add_rotate_function(&my_rotate3, my_rotate3_descr);
     add_rotate_function(&my_rotate4, my_rotate4_descr);
     add_rotate_function(&my_rotate5, my_rotate5_descr);
+    add_rotate_function(&my_rotate6, my_rotate6_descr);
     /* ... Register additional test functions here */
 }
 
