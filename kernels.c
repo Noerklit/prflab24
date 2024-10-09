@@ -170,6 +170,30 @@ void my_rotate6(int dim, pixel *src, pixel *dst)
     }
 }
 
+char my_rotate7_descr[] = "rotate7: Optimizing with less variables and more unrolling";
+void my_rotate7(int dim, pixel *src, pixel *dst) {
+	
+	int i, j, ii, jj;
+	int dim2 = dim - 1;
+	for (j = 0; j < dim; j += 16)
+		for (i = 0; i < dim; i += 16)
+			for (jj = j; jj < j + 16 && jj < dim; jj++)
+			{
+				int newDim = (dim2 - jj) * dim;
+				for (ii = i; ii < i + 16 && ii < dim; ii += 8)
+				{
+					dst[newDim + ii] = src[ii * dim + jj];
+					dst[newDim + ii + 1] = src[(ii + 1) * dim + jj];;
+					dst[newDim + ii + 2] = src[(ii + 2) * dim + jj];;
+					dst[newDim + ii + 3] = src[(ii + 3) * dim + jj];;
+					dst[newDim + ii + 4] = src[(ii + 4) * dim + jj];;
+					dst[newDim + ii + 5] = src[(ii + 5) * dim + jj];;
+					dst[newDim + ii + 6] = src[(ii + 6) * dim + jj];;
+					dst[newDim + ii + 7] = src[(ii + 7) * dim + jj];;
+				}
+			}	
+}
+
 /* 
  * naive_rotate - The naive baseline version of rotate 
  */
@@ -197,7 +221,7 @@ void naive_rotate(int dim, pixel *src, pixel *dst)
 char rotate_descr[] = "rotate: Current working version";
 void rotate(int dim, pixel *src, pixel *dst)
 {
-    my_rotate6(dim, src, dst);
+    my_rotate7(dim, src, dst);
 }
 
 /*
@@ -214,6 +238,7 @@ void register_rotate_functions()
     add_rotate_function(&my_rotate4, my_rotate4_descr);
     add_rotate_function(&my_rotate5, my_rotate5_descr);
     add_rotate_function(&my_rotate6, my_rotate6_descr);
+    add_rotate_function(&my_rotate7, my_rotate7_descr);
     /* ... Register additional test functions here */
 }
 
@@ -223,13 +248,62 @@ void register_rotate_functions()
 
 // Your different versions of the rotate_t kernel go here
 // (i.e. rotate with multi-threading)
-char my_rotate_t_descr[] = "rotate_t: Current working version";
+
+struct thread_data {
+	int dim2;
+	pixel *src2;
+	pixel *dst2;
+	int thread_id;
+}; 
+
+void *rotate_thread(void *arg) {
+	struct thread_data *data;
+	data = (struct thread_data *)arg;
+	int dim = data->dim2;
+	pixel *src = data->src2;
+	pixel *dst = data->dst2;
+	int thread_id = data->thread_id;
+	
+	int i, j, ii;
+	int dim2 = dim - 1;
+	int size_of_block = dim / 8;
+
+	for (i = thread_id * size_of_block; i < (thread_id + 1) * size_of_block; i+= 8)
+		for (j = 0; j < dim; j++)
+		{
+			int newDim = (dim2 - j) * dim;
+			for (ii = i; ii < i + 8 && ii < dim; ii++)
+			{
+				dst[newDim + ii] = src[ii * dim + j];
+			}
+		}
+	return NULL;
+}
+char my_rotate_t_descr[] = "rotate_t: Multithread try";
 void my_rotate_t(int dim, pixel *src, pixel *dst)
 {
-    naive_rotate(dim, src, dst);
+	int i;
+	int num_threads = 8;
+	pthread_t *thread_array;
+	
+	struct thread_data thread_data_array[num_threads];
+
+	thread_array = malloc(num_threads * sizeof(pthread_t));
+
+	for (i = 0; i < num_threads; i++) {
+		thread_data_array[i].thread_id = i;
+		thread_data_array[i].dim2 = dim;
+		thread_data_array[i].src2 = src;
+		thread_data_array[i].dst2 = dst;
+		pthread_create(&thread_array[i], NULL, rotate_thread, (void *)&thread_data_array[i]);
+	}	
+
+	for (i = 0; i < num_threads; i++) {
+		pthread_join(thread_array[i], NULL);
+	}
+
+	free(thread_array);
 }
-
-
 /* 
  * rotate_t - Your current working version of rotate_t
  * IMPORTANT: This is the version you will be graded on
@@ -251,6 +325,7 @@ void rotate_t(int dim, pixel *src, pixel *dst)
 void register_rotate_t_functions() 
 {
     add_rotate_t_function(&rotate_t, rotate_t_descr);
+    add_rotate_t_function(&my_rotate_t, my_rotate_t_descr);
     /* ... Register additional test functions here */
 }
 
