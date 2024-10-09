@@ -231,13 +231,13 @@ void rotate(int dim, pixel *src, pixel *dst)
  */
 void register_rotate_functions() 
 {
-    add_rotate_function(&rotate, rotate_descr);
-    add_rotate_function(&my_rotate, my_rotate_descr);
-    add_rotate_function(&my_rotate2, my_rotate2_descr);
-    add_rotate_function(&my_rotate3, my_rotate3_descr);
-    add_rotate_function(&my_rotate4, my_rotate4_descr);
-    add_rotate_function(&my_rotate5, my_rotate5_descr);
-    add_rotate_function(&my_rotate6, my_rotate6_descr);
+    // add_rotate_function(&rotate, rotate_descr);
+    // add_rotate_function(&my_rotate, my_rotate_descr);
+    // add_rotate_function(&my_rotate2, my_rotate2_descr);
+    // add_rotate_function(&my_rotate3, my_rotate3_descr);
+    // add_rotate_function(&my_rotate4, my_rotate4_descr);
+    // add_rotate_function(&my_rotate5, my_rotate5_descr);
+    // add_rotate_function(&my_rotate6, my_rotate6_descr);
     add_rotate_function(&my_rotate7, my_rotate7_descr);
     /* ... Register additional test functions here */
 }
@@ -282,6 +282,11 @@ void *rotate_thread(void *arg) {
 char my_rotate_t_descr[] = "rotate_t: Multithread try";
 void my_rotate_t(int dim, pixel *src, pixel *dst)
 {
+	if (dim < 512) 
+	{
+		rotate(dim, src, dst);
+		return;
+	}
 	int i;
 	int num_threads = 8;
 	pthread_t *thread_array;
@@ -311,7 +316,7 @@ void my_rotate_t(int dim, pixel *src, pixel *dst)
 char rotate_t_descr[] = "rotate_t: Current working version";
 void rotate_t(int dim, pixel *src, pixel *dst)
 {
-    naive_rotate(dim, src, dst);
+    my_rotate_t(dim, src, dst);
 }
 
 /*********************************************************************
