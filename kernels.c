@@ -330,7 +330,7 @@ void rotate_t(int dim, pixel *src, pixel *dst)
 
 void register_rotate_t_functions() 
 {
-    add_rotate_t_function(&rotate_t, rotate_t_descr);
+    // add_rotate_t_function(&rotate_t, rotate_t_descr);
     add_rotate_t_function(&my_rotate_t, my_rotate_t_descr);
     /* ... Register additional test functions here */
 }
@@ -380,7 +380,7 @@ void blend(int dim, pixel *src, pixel *dst)
  *     add_blend_function() for each test function.
  */
 void register_blend_functions() {
-    add_blend_function(&blend, blend_descr);
+    // add_blend_function(&blend, blend_descr);
     add_blend_function(&my_blend, my_blend_descr);
     /* ... Register additional test functions here */
 }
@@ -392,7 +392,7 @@ void register_blend_functions() {
 // Your different versions of the blend_v kernel go here
 // (i.e. with vectorization, aka. SIMD).
 
-char my_blend_v_descr[] = "Vectors";
+char my_blend_v_descr[] = "Vectors but why is vim making indentation so weird?";
 void my_blend_v(int dim, pixel *src, pixel *dst)
 {
 	// Creating AVX register with eight floats set to 1.0
@@ -473,7 +473,7 @@ void my_blend_v(int dim, pixel *src, pixel *dst)
 char blend_v_descr[] = "blend_v: Current working version";
 void blend_v(int dim, pixel *src, pixel *dst)
 {
-    naive_blend(dim, src, dst);
+    my_blend_v(dim, src, dst);
 }
 
 /*
@@ -482,7 +482,7 @@ void blend_v(int dim, pixel *src, pixel *dst)
  *     add_blend_function() for each test function.
  */
 void register_blend_v_functions() {
-    add_blend_v_function(&blend_v, blend_v_descr);
+    // add_blend_v_function(&blend_v, blend_v_descr);
 	add_blend_v_function(&my_blend_v, my_blend_v_descr);
     /* ... Register additional test functions here */
 }
