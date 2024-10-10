@@ -395,65 +395,79 @@ void register_blend_functions() {
 char my_blend_v_descr[] = "Vectors";
 void my_blend_v(int dim, pixel *src, pixel *dst)
 {
-    const __m256 one_vector = _mm256_set1_ps(1.0f);
-    const __m256 bgc_vector = _mm256_setr_ps((float)bgc.red, (float)bgc.green, (float)bgc.blue, 0.0F, (float)bgc.red, (float)bgc.green, (float)bgc.blue, 0.0F);
-    const __m256i zero_vector = _mm256_setzero_si256();
-    const __m256 one_over_ushrt_max = _mm256_set1_ps(1.0F / USHRT_MAX);
+	// Creating AVX register with eight floats set to 1.0
+	const __m256 start_vector = _mm256_set1_ps(1.0f);
+    	// Setup background color in register, alpha to 0, will be set later
+	const __m256 bgc_vector = _mm256_setr_ps(
+			(float)bgc.red, (float)bgc.green, (float)bgc.blue, 0.0F, 
+			(float)bgc.red, (float)bgc.green, (float)bgc.blue, 0.0F);
+	// Setup a vector register with all values at 0
+    	const __m256i zero_vector = _mm256_setzero_si256();
+	// See name of const here
+    	const __m256 one_divided_by_ushrt_max = _mm256_set1_ps(1.0F / USHRT_MAX);
+	
+	//loop over image data
+    	for (int i = 0; i < dim; i++)
+    	{
+		//Loop over rows of the image, processing 4 pixels at a time
+        	for (int j = 0; j < dim; j += 4)
+        	{
+			//Load 4 pixels into register, each pixel is 64 bits?
+            		__m256i pixelblock = _mm256_load_si256((__m256i *)&src[RIDX(i, j, dim)]);
 
-    for (int i = 0; i < dim; i++)
-    {
-        for (int j = 0; j < dim; j += 4)
-        {
-            __m256i pix4 = _mm256_load_si256((__m256i *)&src[RIDX(i, j, dim)]);
+            		// Unpack lower half of pixel block into integers
+            		__m256i lower_half_to_ints = _mm256_unpacklo_epi16(pixelblock, zero_vector);
+            		//Unpack upper half of pixel block into integers
+			__m256i upper_half_to_ints = _mm256_unpackhi_epi16(pixelblock, zero_vector);
 
-            // Convert to floats
-            __m256i lower_ints = _mm256_unpacklo_epi16(pix4, zero_vector);
-            __m256i upper_ints = _mm256_unpackhi_epi16(pix4, zero_vector);
+            		//Convert integers into floats
+			__m256 lower_half_to_floats = _mm256_cvtepi32_ps(lower_half_to_ints);
+			__m256 upper_half_to_floats = _mm256_cvtepi32_ps(upper_half_to_ints);
 
-            __m256 lower_floats = _mm256_cvtepi32_ps(lower_ints);
-            __m256 upper_floats = _mm256_cvtepi32_ps(upper_ints);
+            		// Extract alpha values from lower and upper half
+            		__m256i lower_alpha_ints = _mm256_shuffle_epi32(lower_half_to_ints, 0b11111111);
+            		__m256i upper_alpha_ints = _mm256_shuffle_epi32(upper_half_to_ints, 0b11111111);
+			// Convert alpha values from integers to floats
+            		__m256 lower_alpha = _mm256_cvtepi32_ps(lower_alpha_ints);
+            		__m256 upper_alpha = _mm256_cvtepi32_ps(upper_alpha_ints);
 
-            // Alpha vectors
-            __m256i lower_alpha_ints = _mm256_shuffle_epi32(lower_ints, 0b11111111);
-            __m256i upper_alpha_ints = _mm256_shuffle_epi32(upper_ints, 0b11111111);
+		    	// Normalize values by alpha / USHRT_MAX
+            		__m256 lower_half_alpha = _mm256_mul_ps(lower_alpha, one_over_ushrt_max);
+            		__m256 upper_half_alpha = _mm256_mul_ps(upper_alpha, one_over_ushrt_max);
 
-            __m256 lower_alpha = _mm256_cvtepi32_ps(lower_alpha_ints);
-            __m256 upper_alpha = _mm256_cvtepi32_ps(upper_alpha_ints);
+            		// (1 - a) used for blending
+            		__m256 lower_one_minus_a = _mm256_sub_ps(start_vector, lower_half_a);
+            		__m256 upper_one_minus_a = _mm256_sub_ps(start_vector, upper_half_a);
 
-            // a = alpha / USHRT_MAX
-            __m256 lower_a = _mm256_mul_ps(lower_alpha, one_over_ushrt_max);
-            __m256 upper_a = _mm256_mul_ps(upper_alpha, one_over_ushrt_max);
+            		// Compute background contribution by ((1 - a) * background)
+			// So how much of the background color will be mixed into each pixel
+            		__m256 lower_bgc = _mm256_mul_ps(lower_one_minus_a, bgc_vector);
+            		__m256 upper_bgc = _mm256_mul_ps(upper_one_minus_a, bgc_vector);
 
-            // (1 - a)
-            __m256 lower_one_minus_a = _mm256_sub_ps(one_vector, lower_a);
-            __m256 upper_one_minus_a = _mm256_sub_ps(one_vector, upper_a);
+            		// Compute blended values
+            		__m256 lower_half_blended = _mm256_fmadd_ps(lower_a, lower_half_to_floats, lower_bgc);
+            		__m256 upper_half_blended = _mm256_fmadd_ps(upper_a, upper__half_to_floats, upper_bgc);
 
-            // ((1 - a) * background)
-            __m256 lower_bgc = _mm256_mul_ps(lower_one_minus_a, bgc_vector);
-            __m256 upper_bgc = _mm256_mul_ps(upper_one_minus_a, bgc_vector);
+            		// Convert blended floats to integers
+            		__m256i lower_blended_ints = _mm256_cvtps_epi32(lower_half_blended);
+            		__m256i upper_blended_ints = _mm256_cvtps_epi32(upper_half_blended);
 
-            // Compute blended values
-            __m256 lower_blended = _mm256_fmadd_ps(lower_a, lower_floats, lower_bgc);
-            __m256 upper_blended = _mm256_fmadd_ps(upper_a, upper_floats, upper_bgc);
+            		// Pack 32-bit integers into 16-bit unsigned shorts
+            		__m256i packed = _mm256_packus_epi32(lower_blended_ints, upper_blended_ints);
 
-            // Convert blended floats to integers
-            __m256i lower_blended_ints = _mm256_cvtps_epi32(lower_blended);
-            __m256i upper_blended_ints = _mm256_cvtps_epi32(upper_blended);
+            		// Mask for selecting every fourth element which is the alpha channel
+			// So each -1 is a value to be changed
+            		__m256i mask = _mm256_set_epi16(-1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0);
 
-            // Pack 32-bit integers into 16-bit unsigned shorts
-            __m256i packed = _mm256_packus_epi32(lower_blended_ints, upper_blended_ints);
+			//Register where each element is USHRT_MAX, max value for alpha channel
+            		__m256i ushrt_max = _mm256_set1_epi16(USHRT_MAX);
 
-            // Mask for selecting every fourth element
-            __m256i mask = _mm256_set_epi16(-1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0);
+            		// Replace every fourth element (alpha values)
+            		packed = _mm256_blendv_epi8(packed, ushrt_max, mask);
 
-            __m256i ushrt_max = _mm256_set1_epi16(USHRT_MAX);
-
-            // Replace every fourth element (alpha values)
-            packed = _mm256_blendv_epi8(packed, ushrt_max, mask);
-
-            _mm256_store_si256((__m256i *)&dst[RIDX(i, j, dim)], packed);
-        }
-    }
+            		_mm256_store_si256((__m256i *)&dst[RIDX(i, j, dim)], packed);
+        	}
+    	}
 }
 
 char blend_v_descr[] = "blend_v: Current working version";
