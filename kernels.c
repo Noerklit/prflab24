@@ -11,6 +11,7 @@
 #include "blend.h"  // helper functions for naive_blend
 #include <pthread.h>
 #include <limits.h>
+#include <immintrin.h>
 
 /* 
  * Please fill in the following struct
@@ -391,6 +392,70 @@ void register_blend_functions() {
 // Your different versions of the blend_v kernel go here
 // (i.e. with vectorization, aka. SIMD).
 
+char my_blend_v_descr[] = "Vectors";
+void my_blend_v(int dim, pixel *src, pixel *dst)
+{
+    const __m256 one_vector = _mm256_set1_ps(1.0f);
+    const __m256 bgc_vector = _mm256_setr_ps((float)bgc.red, (float)bgc.green, (float)bgc.blue, 0.0F, (float)bgc.red, (float)bgc.green, (float)bgc.blue, 0.0F);
+    const __m256i zero_vector = _mm256_setzero_si256();
+    const __m256 one_over_ushrt_max = _mm256_set1_ps(1.0F / USHRT_MAX);
+
+    for (int i = 0; i < dim; i++)
+    {
+        for (int j = 0; j < dim; j += 4)
+        {
+            __m256i pix4 = _mm256_load_si256((__m256i *)&src[RIDX(i, j, dim)]);
+
+            // Convert to floats
+            __m256i lower_ints = _mm256_unpacklo_epi16(pix4, zero_vector);
+            __m256i upper_ints = _mm256_unpackhi_epi16(pix4, zero_vector);
+
+            __m256 lower_floats = _mm256_cvtepi32_ps(lower_ints);
+            __m256 upper_floats = _mm256_cvtepi32_ps(upper_ints);
+
+            // Alpha vectors
+            __m256i lower_alpha_ints = _mm256_shuffle_epi32(lower_ints, 0b11111111);
+            __m256i upper_alpha_ints = _mm256_shuffle_epi32(upper_ints, 0b11111111);
+
+            __m256 lower_alpha = _mm256_cvtepi32_ps(lower_alpha_ints);
+            __m256 upper_alpha = _mm256_cvtepi32_ps(upper_alpha_ints);
+
+            // a = alpha / USHRT_MAX
+            __m256 lower_a = _mm256_mul_ps(lower_alpha, one_over_ushrt_max);
+            __m256 upper_a = _mm256_mul_ps(upper_alpha, one_over_ushrt_max);
+
+            // (1 - a)
+            __m256 lower_one_minus_a = _mm256_sub_ps(one_vector, lower_a);
+            __m256 upper_one_minus_a = _mm256_sub_ps(one_vector, upper_a);
+
+            // ((1 - a) * background)
+            __m256 lower_bgc = _mm256_mul_ps(lower_one_minus_a, bgc_vector);
+            __m256 upper_bgc = _mm256_mul_ps(upper_one_minus_a, bgc_vector);
+
+            // Compute blended values
+            __m256 lower_blended = _mm256_fmadd_ps(lower_a, lower_floats, lower_bgc);
+            __m256 upper_blended = _mm256_fmadd_ps(upper_a, upper_floats, upper_bgc);
+
+            // Convert blended floats to integers
+            __m256i lower_blended_ints = _mm256_cvtps_epi32(lower_blended);
+            __m256i upper_blended_ints = _mm256_cvtps_epi32(upper_blended);
+
+            // Pack 32-bit integers into 16-bit unsigned shorts
+            __m256i packed = _mm256_packus_epi32(lower_blended_ints, upper_blended_ints);
+
+            // Mask for selecting every fourth element
+            __m256i mask = _mm256_set_epi16(-1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0);
+
+            __m256i ushrt_max = _mm256_set1_epi16(USHRT_MAX);
+
+            // Replace every fourth element (alpha values)
+            packed = _mm256_blendv_epi8(packed, ushrt_max, mask);
+
+            _mm256_store_si256((__m256i *)&dst[RIDX(i, j, dim)], packed);
+        }
+    }
+}
+
 char blend_v_descr[] = "blend_v: Current working version";
 void blend_v(int dim, pixel *src, pixel *dst)
 {
@@ -404,6 +469,7 @@ void blend_v(int dim, pixel *src, pixel *dst)
  */
 void register_blend_v_functions() {
     add_blend_v_function(&blend_v, blend_v_descr);
+	add_blend_v_function(&my_blend_v, my_blend_v_descr);
     /* ... Register additional test functions here */
 }
 
