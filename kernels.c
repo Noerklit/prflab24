@@ -338,24 +338,47 @@ void register_rotate_t_functions()
 /******************************************************************************
  * BLEND KERNEL
  *****************************************************************************/
-void my_blend_pixel(pixel* s, pixel* d, pixel* b) {
-    float a = ( (float)(s->alpha) ) / USHRT_MAX;
-    
-    d->red   = (a * s->red  ) + ( (1 - a) * b->red  );
-    d->green = (a * s->green) + ( (1 - a) * b->green);
-    d->blue  = (a * s->blue) +  ( (1 - a) * b->blue );
-    d->alpha = USHRT_MAX; // opaque
-}
-
 char my_blend_descr[] = "my_blend: Moving code from blend.c into this file ";
 void my_blend(int dim, pixel *src, pixel *dst) // reads global variable `pixel bgc`
 {
     int i, j;
 
     for (i = 0; i < dim; i++)
-	for (j = 0; j < dim; j++)
-	    my_blend_pixel(&src[RIDX(i, j, dim)], &dst[RIDX(i, j, dim)], &bgc); // `blend_pixel` defined in blend.c
+	for (j = 0; j < dim; j++) {
+		pixel *s = &src[RIDX(i, j, dim)];
+		pixel *d = &src[RIDX(i, j , dim)];
+		pixel *b = &bgc;
+    		
+		float a = ( (float)(s->alpha) ) / USHRT_MAX;
+    		d->red   = (a * s->red  ) + ( (1 - a) * b->red  );
+    		d->green = (a * s->green) + ( (1 - a) * b->green);
+    		d->blue  = (a * s->blue) +  ( (1 - a) * b->blue );
+    		d->alpha = USHRT_MAX; // opaque
+	
+	}
 }
+
+char my_blend1_descr[] = "my_blend: Resub kill me";
+void my_blend1(int dim, pixel *src, pixel *dst) // reads global variable `pixel bgc`
+{
+    int i, j;
+    unsigned int alpha, a_inv;
+
+    for (i = 0; i < dim; i++)
+	for (j = 0; j < dim; j++) {
+		int index = i * dim +j;
+
+		alpha = src[index].alpha;
+		a_inv = USHRT_MAX - alpha;
+		
+		dst[index].red = (alpha * src[index].red + a_inv * bgc.red) / USHRT_MAX;
+		dst[index].green = (alpha * src[index].green + a_inv * bgc.green) / USHRT_MAX;
+		dst[index].blue = (alpha * src[index].blue + a_inv * bgc.blue) / USHRT_MAX;
+		dst[index].alpha = USHRT_MAX;	
+	}
+}
+
+
 // Your different versions of the blend kernel go here.
 
 char naive_blend_descr[] = "naive_blend: Naive baseline implementation";
@@ -371,7 +394,7 @@ void naive_blend(int dim, pixel *src, pixel *dst) // reads global variable `pixe
 char blend_descr[] = "blend: Current working version";
 void blend(int dim, pixel *src, pixel *dst)
 {
-    naive_blend(dim, src, dst);
+    my_blend1(dim, src, dst);
 }
 
 /*
@@ -381,7 +404,7 @@ void blend(int dim, pixel *src, pixel *dst)
  */
 void register_blend_functions() {
     // add_blend_function(&blend, blend_descr);
-    add_blend_function(&my_blend, my_blend_descr);
+    add_blend_function(&my_blend1, my_blend1_descr);
     /* ... Register additional test functions here */
 }
 
